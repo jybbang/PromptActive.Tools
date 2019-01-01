@@ -3,13 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>JunyoungBang</Authors>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
     <Copyright>MIT</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DryIoc.dll" Version="3.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="PubSub" Version="3.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.519" />
     <PackageReference Include="System.Management" Version="4.5.0" />

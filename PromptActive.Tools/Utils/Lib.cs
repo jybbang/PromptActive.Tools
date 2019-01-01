@@ -89,6 +89,19 @@ namespace PromptActive.Tools.Utils
             }
         }
 
+        public static byte[] ToProtobuf<T>(this T obj)
+        {
+            var serialize = new MemoryStream();
+            ProtoBuf.Serializer.Serialize<T>(serialize, obj);
+            return serialize.ToArray();
+        }
+
+        public static T ProtobufDeserialize<T>(this byte[] proto)
+        {
+            var serialize = new MemoryStream(proto);
+            return ProtoBuf.Serializer.Deserialize<T>(serialize);
+        }
+
         public static string ToJson(this object obj, bool canTypeNameHandling = false)
         {
             try
