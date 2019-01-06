@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>JunyoungBang</Authors>
-    <Version>1.2.0</Version>
+    <Version>1.3.1</Version>
     <Copyright>Copyright (c) 2019 jybbang</Copyright>
     <PackageLicenseUrl>https://github.com/jybbang/PromptActive.Tools/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jybbang/PromptActive.Tools</PackageProjectUrl>
@@ -16,7 +16,6 @@
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="PubSub" Version="3.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.519" />
-    <PackageReference Include="System.Management" Version="4.5.0" />
   </ItemGroup>
 
 </Project>
