@@ -37,14 +37,14 @@ namespace PromptActive.Tools.Utils
         const int GW_CHILD = 5;
         #endregion
 
-        public static async void ProcessKill(this Process proc, int sleep = 5000)
+        public static async Task ProcessKill(this Process proc, int sleep = 5000)
         {
             if (proc == null) return;
 
             try
             {
                 proc.Kill();
-                await Task.Delay(sleep);
+                await Task.Delay(sleep).ConfigureAwait(false);
                 var pID = proc.Id;
                 var Title = new StringBuilder(256);
                 var tempHwnd = FindWindow(null, null);

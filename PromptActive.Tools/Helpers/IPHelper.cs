@@ -86,9 +86,9 @@ namespace PromptActive.Tools.Helpers
             return ret;
         }
 
-        public static List<string> ResetIpList(string macAddress, IEnumerable<(string ip, string subnet)> allIpList, string gateway = null, int setpIpTimeout = 5000)
+        public static bool ResetIpList(string macAddress, IEnumerable<(string ip, string subnet)> allIpList, string gateway = null, int setpIpTimeout = 5000)
         {
-            var ret = new List<string>();
+            var ret = false;
             try
             {
                 if (string.IsNullOrEmpty(macAddress)) throw new ArgumentNullException("NG, Mac address can not be empty.");
@@ -140,6 +140,7 @@ namespace PromptActive.Tools.Helpers
                             }
 
                             Thread.Sleep(setpIpTimeout);
+                            ret = true;
                             break;
                         }
                     }
@@ -148,17 +149,8 @@ namespace PromptActive.Tools.Helpers
             }
             catch (Exception ex)
             {
+                ret = false;
                 Trace.TraceError($"{nameof(AddIpAsync)} -> {ex.StackTrace}");
-            }
-            finally
-            {
-                var after = GetIpList(macAddress);
-                ret.Clear();
-                foreach (var item in allIpList)
-                {
-                    var exist = after.Exists(x => x.ip == item.ip);
-                    if (exist) ret.Add(item.ip);
-                }
             }
             return ret;
         }
@@ -175,23 +167,19 @@ namespace PromptActive.Tools.Helpers
                     if (string.IsNullOrEmpty(subnet)) subnet = before.FirstOrDefault().subnet;
                 }
 
-                await ResetIpListAsync(macAddress, new List<(string, string)> { (ip, subnet) }, gateway, setpIpTimeout);
+                ret = await ResetIpListAsync(macAddress, new List<(string, string)> { (ip, subnet) }, gateway, setpIpTimeout).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
+                ret = false;
                 Trace.TraceError($"{nameof(AddIpAsync)} -> {ex.StackTrace}");
-            }
-            finally
-            {
-                var after = GetIpList(macAddress);
-                ret = (after.Count == 1 && after.FirstOrDefault().ip == ip) ? true : false;
             }
             return ret;
         }
 
-        public static async Task<List<string>> ResetIpListAsync(string macAddress, IEnumerable<(string ip, string subnet)> allIpList, string gateway = null, int setpIpTimeout = 5000)
+        public static async Task<bool> ResetIpListAsync(string macAddress, IEnumerable<(string ip, string subnet)> allIpList, string gateway = null, int setpIpTimeout = 5000)
         {
-            var ret = new List<string>();
+            var ret = false;
             try
             {
                 if (string.IsNullOrEmpty(macAddress)) throw new ArgumentNullException("NG, Mac address can not be empty.");
@@ -242,7 +230,8 @@ namespace PromptActive.Tools.Helpers
                                 if (retgw != 0) throw new InvalidOperationException(retgw.ToString());
                             }
 
-                            await Task.Delay(setpIpTimeout);
+                            await Task.Delay(setpIpTimeout).ConfigureAwait(false);
+                            ret = true;
                             break;
                         }
                     }
@@ -251,24 +240,15 @@ namespace PromptActive.Tools.Helpers
             }
             catch (Exception ex)
             {
+                ret = false;
                 Trace.TraceError($"{nameof(AddIpAsync)} -> {ex.StackTrace}");
-            }
-            finally
-            {
-                var after = GetIpList(macAddress);
-                ret.Clear();
-                foreach (var item in allIpList)
-                {
-                    var exist = after.Exists(x => x.ip == item.ip);
-                    if (exist) ret.Add(item.ip);
-                }
             }
             return ret;
         }
 
-        public static async Task<List<string>> SetIpListAsync(string macAddress, IEnumerable<(string ip, string subnet)> allIpList, string gateway = null, int setpIpTimeout = 5000)
+        public static async Task<bool> SetIpListAsync(string macAddress, IEnumerable<(string ip, string subnet)> allIpList, string gateway = null, int setpIpTimeout = 5000)
         {
-            var ret = new List<string>();
+            var ret = false;
             try
             {
                 if (allIpList == null || allIpList.Count() == 0) return ret;
@@ -283,39 +263,39 @@ namespace PromptActive.Tools.Helpers
                         addList.Add(ips);
                     }
                 }
-                await AddIpAsync(macAddress, addList, gateway, setpIpTimeout);
+                var addret = false;
+                if (addList.Count > 0)
+                {
+                    addret = await ResetIpListAsync(macAddress, before.Union(addList), gateway, setpIpTimeout).ConfigureAwait(false);
+                }
 
                 var removeList = new List<string>();
-                foreach (var ips in allIpList)
+                foreach (var ips in before)
                 {
-                    var exist = before.Exists(x => x.ip == ips.ip);
-                    if (exist)
+                    var exist = allIpList.FirstOrDefault(x => x.ip == ips.ip);
+                    if (string.IsNullOrEmpty(exist.ip))
                     {
                         removeList.Add(ips.ip);
                     }
                 }
-                await RemoveIpAsync(macAddress, removeList, gateway, setpIpTimeout);
+                var rmret = false;
+                if (removeList.Count > 0)
+                {
+                    rmret = await RemoveIpAsync(macAddress, removeList, gateway, setpIpTimeout).ConfigureAwait(false);
+                }
+                ret = addret & rmret;
             }
             catch (Exception ex)
             {
+                ret = false;
                 Trace.TraceError($"{nameof(AddIpAsync)} -> {ex.StackTrace}");
-            }
-            finally
-            {
-                var after = GetIpList(macAddress);
-                ret.Clear();
-                foreach (var item in allIpList)
-                {
-                    var exist = after.Exists(x => x.ip == item.ip);
-                    if (exist) ret.Add(item.ip);
-                }
             }
             return ret;
         }
 
-        public static async Task<List<string>> AddIpAsync(string macAddress, IEnumerable<(string ip, string subnet)> addIpList, string gateway = null, int setpIpTimeout = 5000)
+        public static async Task<bool> AddIpAsync(string macAddress, IEnumerable<(string ip, string subnet)> addIpList, string gateway = null, int setpIpTimeout = 5000)
         {
-            var ret = new List<string>();
+            var ret = false;
             try
             {
                 if (addIpList == null || addIpList.Count() == 0) return ret;
@@ -334,29 +314,20 @@ namespace PromptActive.Tools.Helpers
                 }
                 if (isAdded)
                 {
-                    await ResetIpListAsync(macAddress, before, gateway, setpIpTimeout);
+                    ret = await ResetIpListAsync(macAddress, before, gateway, setpIpTimeout).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
+                ret = false;
                 Trace.TraceError($"{nameof(AddIpAsync)} -> {ex.StackTrace}");
-            }
-            finally
-            {
-                var after = GetIpList(macAddress);
-                ret.Clear();
-                foreach (var item in addIpList)
-                {
-                    var exist = after.Exists(x => x.ip == item.ip);
-                    if (exist) ret.Add(item.ip);
-                }
             }
             return ret;
         }
 
-        public static async Task<List<string>> RemoveIpAsync(string macAddress, IEnumerable<string> removeIpList, string gateway = null, int setpIpTimeout = 5000)
+        public static async Task<bool> RemoveIpAsync(string macAddress, IEnumerable<string> removeIpList, string gateway = null, int setpIpTimeout = 5000)
         {
-            var ret = new List<string>();
+            var ret = false;
             try
             {
                 if (removeIpList == null || removeIpList.Count() == 0) return ret;
@@ -389,21 +360,13 @@ namespace PromptActive.Tools.Helpers
                     }
                 }
 
-                await Task.Delay(setpIpTimeout);
+                await Task.Delay(setpIpTimeout).ConfigureAwait(false);
+                ret = true;
             }
             catch (Exception ex)
             {
+                ret = false;
                 Trace.TraceError($"{nameof(RemoveIpAsync)} -> {ex.StackTrace}");
-            }
-            finally
-            {
-                var after = GetIpList(macAddress);
-                ret.Clear();
-                foreach (var ip in removeIpList)
-                {
-                    var exist = after.Exists(x => x.ip == ip);
-                    if (!exist) ret.Add(ip);
-                }
             }
             return ret;
         }
