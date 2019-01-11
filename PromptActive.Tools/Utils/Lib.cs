@@ -421,21 +421,20 @@ namespace PromptActive.Tools.Utils
             }
         }
 
-        public static string GetNewPath(this string path, string targetDir)
+        public static string GetNewPath(this string path, string targetDir = null)
         {
             try
             {
+                targetDir = targetDir ?? Path.GetDirectoryName(path);
                 var fname = Path.GetFileNameWithoutExtension(path);
                 var fext = Path.GetExtension(path);
 
-                var serial = ToInt(fname.SkipWhile(x => x != '_'));
+                var serial = Lib.ToInt(fname.SkipWhile(x => x != '('));
                 var newPath = string.Empty;
                 do
                 {
-                    fname = string.Concat(fname.TakeWhile(x => x != '_'));
-                    var ss = serial > 0 ? $"_{serial}" : string.Empty;
-                    newPath = Path.GetFullPath($@"{targetDir}/{fname}{ss}{fext}");
-                    serial++;
+                    fname = string.Concat(fname.TakeWhile(x => x != '('));
+                    newPath = Path.GetFullPath($@"{targetDir}/{fname}({++serial}){fext}");
                 }
                 while (File.Exists(newPath));
 
@@ -445,7 +444,6 @@ namespace PromptActive.Tools.Utils
             {
                 throw;
             }
-
         }
 
         public static string GetNewPathWithTime(this string path, string targetDir)
